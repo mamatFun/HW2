@@ -53,58 +53,74 @@ pRunway createTempRunway(int runwayID, FlightType type) {
 }
 /*
 	function name: destroyRunway
-	Description: destroy arunway instance by given pointer
+	Description: destroy arunway instance by given pointer (free all memory of inner attributes)
 	Parameters: runway_pointer - pointer to a runway struct
-	Return Value: pointer to the new runway instance, NULL is returned if the operation is failed.
+	Return Value: none
 */
 void destroyRunway(pRunway runway_pointer) {
 	if (runway_pointer == NULL)
 		return;
 	pNode tmp_pointer;
-	while (runway_pointer->pList != NULL) {
+	while (runway_pointer->pList != NULL) {//a loop to go over all flightNodes in a runway
 		tmp_pointer = runway_pointer->pList;
 		runway_pointer->pList = tmp_pointer->nextFlightNode;
 		destroyFlight(tmp_pointer->flight_pointer);
-		free(tmp_pointer);
+		free(tmp_pointer);//memory free of the current flightNode
 	}
-	free(runway_pointer);
+	free(runway_pointer);//memory free of the given runway
 	runway_pointer = NULL;
 	return;
 
 }
+/*
+	function name: isFlightExists
+	Description: checks if a given flight is on a given runway using flight id
+	Parameters: runway_pointer - pointer to a runway struct, flight_id - id of the checked flight
+	Return Value: BOOL (TRUE/FALSE)
+*/
 BOOL isFlightExists(pRunway runway_pointer, int flight_id) {
-	if (runway_pointer == NULL || flight_id < 1 || flight_id > MAX_ID)
+	if (runway_pointer == NULL || flight_id < 1 || flight_id > MAX_ID) //if id is out of bounds
 		return FALSE;
 	pNode tmp_pointer = runway_pointer->pList;
-	while (tmp_pointer != NULL) {
-		if (getFlightID(tmp_pointer->flight_pointer) == flight_id)// if the flight is exist
+	while (tmp_pointer != NULL) {// a loop over all flightNodes on a runway
+		if (getFlightID(tmp_pointer->flight_pointer) == flight_id)// if the flight exists
 			return TRUE;
 		tmp_pointer = tmp_pointer->nextFlightNode;
 	}
-	return FALSE; //if the flight isn't exist
+	return FALSE; //if the flight doesn't exist
 
 }
-
+/*
+	function name: getFlightNum
+	Description: counts number of flights on a runway
+	Parameters: runway_pointer - pointer to a runway struct
+	Return Value: int - number of flights on the runway
+*/
 int getFlightNum(pRunway runway_pointer) {
 	if (runway_pointer == NULL)
-		return -1;
+		return -1;//an impossible return value which resembles a null runway
 
 	int counter = 0;
 	pNode tmp_pointer = runway_pointer->pList;
-	while (tmp_pointer != NULL) {
+	while (tmp_pointer != NULL) {// a loop over all flightNodes on a runway
 		counter++;
 		tmp_pointer = tmp_pointer->nextFlightNode;
 	}
 	return counter;
 }
 
-
+/*
+	function name: getEmergencyNum
+	Description: counts number of emergency flights on a runway
+	Parameters: runway_pointer - pointer to a runway struct
+	Return Value: int - number of emergency flights on the runway
+*/
 int getEmergencyNum(pRunway runway_pointer) {
-	if (runway_pointer == NULL)
+	if (runway_pointer == NULL)//an impossible return value which resembles a null runway
 		return -1;
 	int counter = 0;
 	pNode tmp_pointer = runway_pointer->pList;
-	while (tmp_pointer != NULL) {
+	while (tmp_pointer != NULL) {// a loop over all flightNodes on a runway
 		if (getIsEmergency(tmp_pointer->flight_pointer) == TRUE)// if the flight is emergency
 			counter++;
 		tmp_pointer = tmp_pointer->nextFlightNode;
@@ -112,9 +128,15 @@ int getEmergencyNum(pRunway runway_pointer) {
 	return counter;
 
 }
+/*
+	function name: addFlight
+	Description: adds the flight holded by a given pointer
+	Parameters: runway_pointer - pointer to a runway struct,  flight_pointer - pointer to a flight struct
+	Return Value: SUCCESS/FAILURE
+*/
 Result addFlight(pRunway runway_pointer, pFlight flight_pointer) {
 	if (runway_pointer == NULL || flight_pointer == NULL || (isFlightExists(runway_pointer, getFlightID(flight_pointer))) == TRUE
-		|| (runway_pointer->runwayType != getFlightType(flight_pointer)))
+		|| (runway_pointer->runwayType != getFlightType(flight_pointer))) //if the flight is already on the runway OR flight type doesn't match runway type OR one of the pointers is null
 		return FAILURE;
 	pNode pFlightNode = (pNode)malloc(sizeof(struct flightNode));
 	if (pFlightNode == NULL)
@@ -126,13 +148,13 @@ Result addFlight(pRunway runway_pointer, pFlight flight_pointer) {
 		pFlightNode->nextFlightNode = NULL;
 		return SUCCESS;
 	}
-	if (getIsEmergency(flight_pointer) == TRUE) {
+	if (getIsEmergency(flight_pointer) == TRUE) {//if the given flight is emergency
 		if (getIsEmergency(tmp_pointer->flight_pointer) == FALSE) {//check if the first flight is emergency
 			runway_pointer->pList = pFlightNode;
 			pFlightNode->nextFlightNode = tmp_pointer;
 			return SUCCESS;
 		}
-		while (tmp_pointer->nextFlightNode != NULL &&
+		while (tmp_pointer->nextFlightNode != NULL &&//a loop over all emergency flights on the runway
 			getIsEmergency((tmp_pointer->nextFlightNode)->flight_pointer) == TRUE) {
 
 			tmp_pointer = tmp_pointer->nextFlightNode;
@@ -142,7 +164,7 @@ Result addFlight(pRunway runway_pointer, pFlight flight_pointer) {
 		return SUCCESS;
 	}
 	else {//if the flight we want to add isn't emergency
-		while (tmp_pointer->nextFlightNode != NULL)
+		while (tmp_pointer->nextFlightNode != NULL)//a loop to the end of the runway
 			tmp_pointer = tmp_pointer->nextFlightNode;
 		pFlightNode->nextFlightNode = NULL;
 		tmp_pointer->nextFlightNode = pFlightNode;
@@ -152,13 +174,20 @@ Result addFlight(pRunway runway_pointer, pFlight flight_pointer) {
 	return FAILURE; //shouldn't get here
 
 }
+
+/*
+	function name: removeFlight
+	Description: removes the flight with the given id
+	Parameters: runway_pointer - pointer to a runway struct,  flightID - id of flight to remove
+	Return Value: SUCCESS/FAILURE
+*/
 Result removeFlight(pRunway runway_pointer, int flightID) {
-	if (runway_pointer == NULL || runway_pointer->pList == NULL || flightID < 1 || flightID > MAX_ID)
+	if (runway_pointer == NULL || runway_pointer->pList == NULL || flightID < 1 || flightID > MAX_ID) //if id is invalid OR one of pointers is null
 		return FAILURE;
 	pNode tmp_pointer = runway_pointer->pList;
 	pNode tmp_pointer_last = tmp_pointer;
-	while (tmp_pointer != NULL) {
-		if (getFlightID(tmp_pointer->flight_pointer) == flightID) {
+	while (tmp_pointer != NULL) {//a loop over all flights on runway to match the ID
+		if (getFlightID(tmp_pointer->flight_pointer) == flightID) {//if the flight is found - remove
 			if (tmp_pointer == runway_pointer->pList) //if it's the first flight
 				runway_pointer->pList = tmp_pointer->nextFlightNode;
 			else
@@ -172,6 +201,8 @@ Result removeFlight(pRunway runway_pointer, int flightID) {
 	}
 	return FAILURE; //if it didn't find the flightID
 }
+
+
 Result departFromRunway(pRunway runway_pointer) {
 	if (runway_pointer == NULL)
 		return FAILURE;
