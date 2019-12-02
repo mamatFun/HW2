@@ -2,20 +2,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include "runway.h"
-
+//struct of a Node in a List of Flights on a runway
 struct flightNode {
 	pFlight flight_pointer;
 	pNode nextFlightNode;
 };
-
+//struct of a runway - holds ID, type (DOMESTIC/INTERNATIONAL) and a pointer to a list of flight Nodes
 struct runway {
 	int runwayID;
 	FlightType runwayType;
 	pNode pList;
 };
-
+/*
+	function name: createRunway
+	Description: create a new runway instance with the given ID and type
+	Parameters: runwayID - runway id, type - FlightType(DOMESTIC/INTERNATIONAL)
+	Return Value: pointer to the new runway instance, NULL is returned if the operation is failed.
+*/
 pRunway createRunway(int runwayID, FlightType type) {
-	if (runwayID > 0 && runwayID <= MAX_ID && (type == DOMESTIC || type == INTERNATIONAL)) {
+	if (runwayID > 0 && runwayID <= MAX_ID && (type == DOMESTIC || type == INTERNATIONAL)) {//check if ID and type are valid
 		pRunway runway_pointer = (pRunway)malloc(sizeof(struct runway));
 		if (runway_pointer == NULL)
 			return NULL;
@@ -27,9 +32,14 @@ pRunway createRunway(int runwayID, FlightType type) {
 	}
 	return NULL;
 }
-
+/*
+	function name: createTempRunway
+	Description: create a new runway instance with the given ID and type - an internal use function
+	Parameters: runwayID - runway id, type - FlightType(DOMESTIC/INTERNATIONAL)
+	Return Value: pointer to the new runway instance, NULL is returned if the operation is failed.
+*/
 pRunway createTempRunway(int runwayID, FlightType type) {
-	if (runwayID == MAX_ID + 1 && (type == DOMESTIC || type == INTERNATIONAL)) {
+	if (runwayID == MAX_ID + 1 && (type == DOMESTIC || type == INTERNATIONAL)) {//the id must be out of bounds of real id limits, in order to make sure this temp runway is always available to create
 		pRunway runway_pointer = (pRunway)malloc(sizeof(struct runway));
 		if (runway_pointer == NULL)
 			return NULL;
@@ -41,7 +51,12 @@ pRunway createTempRunway(int runwayID, FlightType type) {
 	}
 	return NULL;
 }
-
+/*
+	function name: destroyRunway
+	Description: destroy arunway instance by given pointer
+	Parameters: runway_pointer - pointer to a runway struct
+	Return Value: pointer to the new runway instance, NULL is returned if the operation is failed.
+*/
 void destroyRunway(pRunway runway_pointer) {
 	if (runway_pointer == NULL)
 		return;
